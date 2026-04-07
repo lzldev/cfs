@@ -1,8 +1,9 @@
-use seahorse::Command;
+use seahorse::{Command, Context};
 
 use crate::actions::{
 	clear_action, get_action, init_action, list_action, remove_action, set_action,
 };
+use crate::error::WithActionResultClosure;
 use crate::flags::{force_create, ignore_null};
 
 pub fn init() -> Command {
@@ -10,7 +11,7 @@ pub fn init() -> Command {
 		.description("inits config file")
 		.alias("i")
 		.usage(format!("{} init", env!("CARGO_PKG_NAME")))
-		.action_with_result(init_action)
+		.action_with_result(|ctx: &Context| WithActionResultClosure::new(init_action).call((&ctx,)))
 }
 
 pub fn list() -> Command {
@@ -18,7 +19,7 @@ pub fn list() -> Command {
 		.description("list all keys and values")
 		.alias("l")
 		.usage(format!("{} list", env!("CARGO_PKG_NAME")))
-		.action_with_result(list_action)
+		.action_with_result(|ctx: &Context| WithActionResultClosure::new(list_action).call((&ctx,)))
 		.flag(force_create())
 }
 
@@ -27,7 +28,7 @@ pub fn clear() -> Command {
 		.description("clear your config file")
 		.alias("c")
 		.usage(format!("{} clear", env!("CARGO_PKG_NAME")))
-		.action_with_result(clear_action)
+		.action_with_result(|ctx: &Context| WithActionResultClosure::new(clear_action).call((&ctx,)))
 }
 
 pub fn remove_value() -> Command {
@@ -35,7 +36,7 @@ pub fn remove_value() -> Command {
 		.description("remove a value")
 		.alias("r")
 		.usage(format!("{} remove foo", env!("CARGO_PKG_NAME")))
-		.action_with_result(remove_action)
+		.action_with_result(|ctx: &Context| WithActionResultClosure::new(remove_action).call((&ctx,)))
 }
 
 pub fn get_value() -> Command {
@@ -43,7 +44,7 @@ pub fn get_value() -> Command {
 		.description("get a value")
 		.alias("g")
 		.usage(format!("{} get foo", env!("CARGO_PKG_NAME")))
-		.action_with_result(get_action)
+		.action_with_result(|ctx: &Context| WithActionResultClosure::new(get_action).call((&ctx,)))
 		.flag(ignore_null())
 		.flag(force_create())
 }
@@ -53,6 +54,6 @@ pub fn set_value() -> Command {
 		.description("set a value")
 		.alias("s")
 		.usage(format!("{} set foo bar", env!("CARGO_PKG_NAME")))
-		.action_with_result(set_action)
+		.action_with_result(|ctx: &Context| WithActionResultClosure::new(set_action).call((&ctx,)))
 		.flag(force_create())
 }

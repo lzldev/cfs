@@ -1,13 +1,14 @@
+use anyhow::{anyhow, Result};
 use std::path::Path;
 
-use seahorse::{ActionError, ActionResult, Context};
+use seahorse::Context;
 
 use crate::config::get_db_path;
-use crate::error::{invalid, to_action_error};
+use crate::error::invalid;
 use crate::storage::sqlite::SQLiteStore;
 use crate::storage::{self, Store, StoreValue};
 
-pub fn init_action(_c: &Context) -> ActionResult {
+pub fn init_action(_c: &Context) -> Result<()> {
 	let config_path = get_db_path();
 	let path = Path::new(&config_path);
 
@@ -20,27 +21,27 @@ pub fn init_action(_c: &Context) -> ActionResult {
 	Ok(())
 }
 
-pub fn list_action(_c: &Context) -> ActionResult {
+pub fn list_action(_c: &Context) -> Result<()> {
 	let store = storage::load_storage();
 
-	for (key, value) in store.all().map_err(to_action_error)?.iter() {
+	for (key, value) in store.all()?.iter() {
 		println!("{}\t{}", key, value);
 	}
 
 	Ok(())
 }
 
-pub fn clear_action(_c: &Context) -> ActionResult {
+pub fn clear_action(_c: &Context) -> Result<()> {
 	let mut store = storage::load_storage();
 
-	let count = store.clear().map_err(to_action_error)?;
+	let count = store.clear()?;
 
 	println!("removed {} keys from store", count);
 
 	Ok(())
 }
 
-pub fn get_action(c: &Context) -> ActionResult {
+pub fn get_action(c: &Context) -> Result<()> {
 	if c.args.len() != 1 {
 		return Err(invalid("command"));
 	}
@@ -53,7 +54,7 @@ pub fn get_action(c: &Context) -> ActionResult {
 
 	let store = storage::load_storage();
 
-	let value = store.get(key).map_err(to_action_error)?;
+	let value = store.get(key)?;
 
 	match value {
 		Some(v) => {
@@ -63,9 +64,7 @@ pub fn get_action(c: &Context) -> ActionResult {
 			if c.bool_flag("ignore_null") {
 				println!();
 			} else {
-				return Err(ActionError {
-					message: format!("could not find key '{}'", key),
-				});
+				return Err(anyhow!("could not find key '{}'", key));
 			}
 		}
 	}
@@ -73,7 +72,7 @@ pub fn get_action(c: &Context) -> ActionResult {
 	Ok(())
 }
 
-pub fn set_action(c: &Context) -> ActionResult {
+pub fn set_action(c: &Context) -> Result<()> {
 	if c.args.len() != 2 {
 		return Err(invalid("command"));
 	}
@@ -89,21 +88,21 @@ pub fn set_action(c: &Context) -> ActionResult {
 	let mut store = storage::load_storage();
 
 	let value = StoreValue::Value(value_str.to_owned());
-	store.set(key, value.clone()).map_err(to_action_error)?;
+	store.set(key, value.clone())?;
 
 	println!("'{}' -> '{}'", key, value);
 
 	Ok(())
 }
 
-pub fn remove_action(c: &Context) -> ActionResult {
+pub fn remove_action(c: &Context) -> Result<()> {
 	let Some(key) = c.args.get(0) else {
 		return Err(invalid("key"));
 	};
 
 	let mut store = storage::load_storage();
 
-	match store.remove(key).map_err(to_action_error)? {
+	match store.remove(key)? {
 		Some(value) => println!("{}\t{}", key, value),
 		None => {
 			println!("key '{}' was not found", key);

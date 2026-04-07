@@ -1,6 +1,8 @@
+#![feature(unboxed_closures)]
+#![feature(fn_traits)]
 use std::{env, process::exit};
 
-use seahorse::{ActionResult, App};
+use seahorse::App;
 
 use crate::commands::{clear, get_value, init, list, remove_value, set_value};
 
@@ -11,7 +13,7 @@ mod error;
 mod flags;
 mod storage;
 
-fn main() -> ActionResult {
+fn main() -> anyhow::Result<()> {
 	let args: Vec<String> = env::args().collect();
 	let app = App::new(env!("CARGO_PKG_NAME"))
 		.description(env!("CARGO_PKG_DESCRIPTION"))
@@ -28,7 +30,7 @@ fn main() -> ActionResult {
 	match app.run_with_result(args) {
 		Ok(_) => (),
 		Err(action_error) => {
-			eprintln!("{}", action_error.message);
+			eprintln!("{}", action_error);
 			exit(1)
 		}
 	};
