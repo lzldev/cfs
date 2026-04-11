@@ -15,8 +15,9 @@ categories = ["command-line-utilities"]
 [dependencies]
 anyhow = "1.0.102"
 dirs = "6.0.0"
+itertools = "0.14.0"
 rkyv = "0.8.15"
-rusqlite = { version = "0.39.0", features = ["bundled"] }
+rusqlite = { version = "0.39.0", features = ["bundled","functions"] }
 seahorse = "2.1.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde-kdl2 = "0.1.0"

@@ -96,6 +96,57 @@ pub fn set_action(c: &Context) -> ActionResult {
 	Ok(())
 }
 
+pub fn list_push_action(c: &Context) -> ActionResult {
+	if c.args.len() != 2 {
+		return Err(invalid("command"));
+	}
+
+	let Some(key) = c.args.get(0) else {
+		return Err(invalid("key"));
+	};
+
+	let Some(value_str) = c.args.get(1) else {
+		return Err(invalid("value"));
+	};
+
+	let config = Config::load().map_err(to_action_error)?;
+
+	let mut store = storage::load_storage(&config);
+
+	let value = StoreValue::Value(value_str.to_owned());
+
+	store
+		.list_push(key, value.clone())
+		.map_err(to_action_error)?;
+
+	println!("'{}' += '{}'", key, value);
+
+	Ok(())
+}
+
+pub fn list_pop_action(c: &Context) -> ActionResult {
+	if c.args.len() != 1 {
+		return Err(invalid("command"));
+	}
+
+	let Some(key) = c.args.get(0) else {
+		return Err(invalid("key"));
+	};
+
+	let config = Config::load().map_err(to_action_error)?;
+
+	let mut store = storage::load_storage(&config);
+
+	match store.list_pop(key).map_err(to_action_error)? {
+		Some(value) => println!("{}", value),
+		None => {
+			println!("key '{}' was not found", key);
+		}
+	}
+
+	Ok(())
+}
+
 pub fn remove_action(c: &Context) -> ActionResult {
 	let Some(key) = c.args.get(0) else {
 		return Err(invalid("key"));

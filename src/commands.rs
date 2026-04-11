@@ -1,7 +1,8 @@
 use seahorse::Command;
 
 use crate::actions::{
-	clear_action, get_action, init_action, list_action, remove_action, set_action,
+	clear_action, get_action, init_action, list_action, list_pop_action, list_push_action,
+	remove_action, set_action,
 };
 use crate::flags::{force_create, ignore_null};
 
@@ -54,5 +55,23 @@ pub fn set_value() -> Command {
 		.alias("s")
 		.usage(format!("{} set foo bar", env!("CARGO_PKG_NAME")))
 		.action_with_result(set_action)
+		.flag(force_create())
+}
+
+pub fn list_push() -> Command {
+	Command::new("lpush")
+		.description("push a value into a list")
+		.alias("lpu")
+		.usage(format!("{} lpush foo bar", env!("CARGO_PKG_NAME")))
+		.action_with_result(list_push_action)
+		.flag(force_create())
+}
+
+pub fn list_pop() -> Command {
+	Command::new("lpop")
+		.description("pop a value from a list")
+		.alias("lpo")
+		.usage(format!("{} lpop foo bar", env!("CARGO_PKG_NAME")))
+		.action_with_result(list_pop_action)
 		.flag(force_create())
 }

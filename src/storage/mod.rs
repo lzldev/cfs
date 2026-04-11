@@ -14,6 +14,9 @@ pub trait Store {
 	fn set(&mut self, key: &str, value: StoreValue) -> Result<StoreValue>;
 	fn remove(&mut self, key: &str) -> Result<Option<StoreValue>>;
 
+	fn list_push(&mut self, key: &str, value: StoreValue) -> Result<StoreValue>;
+	fn list_pop(&mut self, key: &str) -> Result<Option<StoreValue>>;
+
 	fn clear(&mut self) -> Result<usize>;
 }
 

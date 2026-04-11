@@ -2,7 +2,7 @@ use std::{env, process::exit};
 
 use seahorse::{ActionResult, App};
 
-use crate::commands::{clear, get_value, init, list, remove_value, set_value};
+use crate::commands::{clear, get_value, init, list, list_pop, list_push, remove_value, set_value};
 
 mod actions;
 mod commands;
@@ -20,6 +20,8 @@ fn main() -> ActionResult {
 		.usage(format!("{} [commands]", env!("CARGO_PKG_NAME")))
 		.command(set_value())
 		.command(get_value())
+		.command(list_push())
+		.command(list_pop())
 		.command(list())
 		.command(init())
 		.command(remove_value())

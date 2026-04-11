@@ -20,8 +20,12 @@ impl Display for StoreValue {
 			StoreValue::Value(v) => write!(f, "{}", v),
 			StoreValue::List(items) => {
 				let mut array_string = String::new();
-				for i in items.iter() {
-					array_string.push_str(&format!("{},", i));
+
+				for (idx, i) in items.iter().enumerate() {
+					array_string.push_str(&format!("{}", i));
+					if idx < (items.len() - 1) {
+						array_string.push(',');
+					}
 				}
 
 				write!(f, "[{}]", array_string)
