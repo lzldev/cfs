@@ -1,8 +1,9 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
-use rusqlite::OptionalExtension as _;
+use rusqlite::{params, OptionalExtension as _};
 
 use crate::storage::{Store, StoreValue};
+use rkyv::rancor::{self, Error};
 
 #[derive(Debug)]
 pub struct SQLiteStore {
@@ -26,7 +27,15 @@ impl Store for SQLiteStore {
 		let mut query = self.connection.prepare("SELECT key,value from KV")?;
 
 		let values = query
-			.query_map([], |row| Ok((row.get(0)?, StoreValue::Value(row.get(1)?))))?
+			.query_map([], |row| {
+				let blob = row.get_ref(1)?.as_blob()?;
+				let value = unsafe {
+					rkyv::from_bytes_unchecked::<StoreValue, rancor::Error>(&blob)
+						.expect("to deserialize data")
+				};
+
+				return Ok((row.get(0)?, value));
+			})?
 			.collect::<Result<Vec<_>, _>>()?;
 
 		Ok(values)
@@ -38,7 +47,15 @@ impl Store for SQLiteStore {
 			.query_row(
 				"SELECT key,value from KV where key = ?1 LIMIT 1",
 				[key],
-				|row| Ok(StoreValue::Value(row.get(1)?)),
+				|row| {
+					let blob = row.get_ref(1)?.as_blob()?;
+					let value = unsafe {
+						rkyv::from_bytes_unchecked::<StoreValue, rancor::Error>(&blob)
+							.expect("to deserialize data")
+					};
+
+					return Ok(value);
+				},
 			)
 			.optional()?;
 
@@ -46,19 +63,14 @@ impl Store for SQLiteStore {
 	}
 
 	fn set(&mut self, key: &str, value: StoreValue) -> Result<StoreValue> {
-		let StoreValue::Value(value) = value else {
-			return Err(anyhow!(
-				"Invalid value passed into SQLiteStore GET [{}]",
-				value
-			));
-		};
+		let blob = rkyv::to_bytes::<Error>(&value)?;
 
 		self.connection.execute(
 			"INSERT INTO KV VALUES(NULL,?1,?2) ON CONFLICT(key) DO UPDATE SET value = ?2",
-			[key, &value],
+			params![key, blob.as_slice()],
 		)?;
 
-		Ok(StoreValue::Value(value))
+		Ok(value)
 	}
 
 	fn remove(&mut self, key: &str) -> Result<Option<StoreValue>> {
@@ -80,7 +92,6 @@ impl Store for SQLiteStore {
 	}
 
 	fn clear(&mut self) -> Result<usize> {
-		let deleted = self.connection.execute("DELETE FROM KV", [])?;
-		Ok(deleted)
+		Ok(self.connection.execute("DELETE FROM KV", [])?)
 	}
 }
