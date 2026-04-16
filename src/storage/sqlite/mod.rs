@@ -6,6 +6,9 @@ use rusqlite::{functions::FunctionFlags, params, OptionalExtension as _};
 use crate::storage::{value::ArchivedStoreValue, Store, StoreValue};
 use rkyv::rancor::{self, Error};
 
+mod types;
+use types::AlignedVecWrapper;
+
 #[derive(Debug)]
 pub struct SQLiteStore {
 	connection: rusqlite::Connection,
@@ -54,9 +57,9 @@ impl SQLiteStore {
 						})
 						.collect::<Vec<_>>();
 
-					let blob = rkyv::to_bytes::<Error>(&StoreValue::List(new_list))
-						.expect("to serialize list")
-						.into_vec();
+					let blob = AlignedVecWrapper(
+						rkyv::to_bytes::<Error>(&StoreValue::List(new_list)).expect("to serialize list"),
+					);
 
 					return Ok(blob);
 				},
